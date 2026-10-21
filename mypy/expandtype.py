@@ -123,13 +123,19 @@ def freshen_function_type_vars(callee: F) -> F:
     if isinstance(callee, CallableType):
         if not callee.is_generic():
             return callee
-        tvs = []
         tvmap: dict[TypeVarId, Type] = {}
         for v in callee.variables:
             tv = v.new_unification_variable(v)
-            tvs.append(tv)
             tvmap[v.id] = tv
-        fresh = expand_type(callee, tvmap).copy_modified(variables=tvs)
+        fresh = expand_type(callee, tvmap)
+        # Keep the substituted defaults on the fresh variables, without changing
+        # the originals or the replacements in tvmap.
+        fresh_variables = []
+        for v in callee.variables:
+            expanded = expand_type(v, tvmap)
+            assert isinstance(expanded, TypeVarLikeType)
+            fresh_variables.append(expanded)
+        fresh = fresh.copy_modified(variables=fresh_variables)
         return cast(F, fresh)
     else:
         assert isinstance(callee, Overloaded)
@@ -251,7 +257,7 @@ class ExpandTypeVisitor(TrivialSyntheticTypeTranslator):
             if (tvar_id := repl.id) in self.recursive_tvar_guard:
                 return self.recursive_tvar_guard[tvar_id] or repl
             self.recursive_tvar_guard[tvar_id] = None
-            repl.default = repl.default.accept(self)
+            repl = repl.copy_modified(default=repl.default.accept(self))
             expanded = repl.accept(self)  # Note: `expanded is repl` may be true.
             repl = repl if isinstance(expanded, TypeVarType) else expanded
             self.recursive_tvar_guard[tvar_id] = repl

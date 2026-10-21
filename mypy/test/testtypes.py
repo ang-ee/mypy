@@ -256,6 +256,30 @@ class TypeOpsSuite(Suite):
         self.assert_expand(self.fx.t, [(self.fx.t.id, self.fx.a)], self.fx.a)
         self.assert_expand(self.fx.t, [(self.fx.s.id, self.fx.a)], self.fx.t)
 
+    def test_expand_type_var_default_preserves_original(self) -> None:
+        row = self.fx.s.copy_modified(default=self.fx.t)
+
+        for replacement in (self.fx.a, self.fx.b):
+            expanded = mypy.expandtype.expand_type(row, {self.fx.t.id: replacement, row.id: row})
+            assert isinstance(expanded, TypeVarType)
+            assert expanded.default == replacement
+            assert expanded.id == row.id
+            assert row.default is self.fx.t
+            assert expanded is not row
+
+    def test_freshen_function_type_var_dependent_default(self) -> None:
+        row = self.fx.s.copy_modified(default=self.fx.t)
+        original = self.fx.callable(row).copy_modified(variables=[self.fx.t, row])
+
+        fresh = mypy.expandtype.freshen_function_type_vars(original)
+
+        parameter, fresh_row = fresh.variables
+        assert isinstance(fresh_row.default, TypeVarType)
+        assert fresh_row.default.id == parameter.id
+        assert fresh_row.id != row.id
+        assert parameter.id != self.fx.t.id
+        assert row.default is self.fx.t
+
     def test_expand_basic_generic_types(self) -> None:
         self.assert_expand(self.fx.gt, [(self.fx.t.id, self.fx.a)], self.fx.ga)
 
