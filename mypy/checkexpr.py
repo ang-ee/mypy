@@ -1676,9 +1676,9 @@ class ExpressionChecker(ExpressionVisitor[Type], ExpressionCheckerSharedApi):
 
         if (
             callee.is_type_obj()
-            and callee.type_object().is_protocol
             # Exception for Type[...]
             and not callee.from_type_type
+            and callee.type_object().is_protocol
         ):
             self.chk.fail(
                 message_registry.CANNOT_INSTANTIATE_PROTOCOL.format(callee.type_object().name),
@@ -1686,9 +1686,9 @@ class ExpressionChecker(ExpressionVisitor[Type], ExpressionCheckerSharedApi):
             )
         elif (
             callee.is_type_obj()
-            and callee.type_object().is_abstract
             # Exception for Type[...]
             and not callee.from_type_type
+            and callee.type_object().is_abstract
             and not callee.type_object().fallback_to_any
         ):
             type = callee.type_object()
@@ -1905,6 +1905,8 @@ class ExpressionChecker(ExpressionVisitor[Type], ExpressionCheckerSharedApi):
             res = type_object_type(item.type)
             if isinstance(res, CallableType):
                 res = res.copy_modified(from_type_type=True)
+            elif isinstance(res, Overloaded):
+                res = Overloaded([c.copy_modified(from_type_type=True) for c in res.items])
             expanded = expand_type_by_instance(res, item)
             if isinstance(expanded, CallableType):
                 # Callee of the form Type[...] should never be generic, only
@@ -1926,11 +1928,16 @@ class ExpressionChecker(ExpressionVisitor[Type], ExpressionCheckerSharedApi):
             # with typevar.
             callee = self.analyze_type_type_callee(get_proper_type(item.upper_bound), context)
             callee = get_proper_type(callee)
-            if isinstance(callee, CallableType):
-                callee = callee.copy_modified(ret_type=item)
-            elif isinstance(callee, Overloaded):
-                callee = Overloaded([c.copy_modified(ret_type=item) for c in callee.items])
-            return callee
+            callees: list[Type] = []
+            for bound_callee in get_proper_types(flatten_nested_unions([callee])):
+                if isinstance(bound_callee, CallableType):
+                    bound_callee = bound_callee.copy_modified(ret_type=item)
+                elif isinstance(bound_callee, Overloaded):
+                    bound_callee = Overloaded(
+                        [c.copy_modified(ret_type=item) for c in bound_callee.items]
+                    )
+                callees.append(bound_callee)
+            return UnionType.make_union(callees, callee.line, callee.column)
         # We support Type of namedtuples but not of tuples in general
         if isinstance(item, TupleType) and tuple_fallback(item).type.fullname != "builtins.tuple":
             return self.analyze_type_type_callee(tuple_fallback(item), context)

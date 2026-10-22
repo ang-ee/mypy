@@ -1,0 +1,102 @@
+[case testUnionBoundConstructorPreservesTypeVariable]
+from typing import Generic, Type, TypeVar, Union
+
+class A: pass
+class B: pass
+class Derived(A): pass
+T = TypeVar('T', bound=Union[A, B])
+
+def construct(model: Type[T]) -> T:
+    value = model()
+    return value
+
+class Factory(Generic[T]):
+    def __init__(self, model: Type[T]) -> None:
+        self.model = model
+    def construct(self) -> T:
+        return self.model()
+
+reveal_type(construct(Derived))  # N: Revealed type is "__main__.Derived"
+reveal_type(Factory(Derived).construct())  # N: Revealed type is "__main__.Derived"
+
+[case testUnionBoundConstructorPreservesNewStyleTypeVariable]
+# flags: --python-version 3.12
+class A: pass
+class B: pass
+class Derived(A): pass
+
+def construct[T: A | B](model: type[T]) -> T:
+    return model()
+
+class Factory[T: A | B]:
+    model: type[T]
+    def construct(self) -> T:
+        return self.model()
+
+reveal_type(construct(Derived))  # N: Revealed type is "__main__.Derived"
+
+[case testUnionBoundConstructorRetainsArgumentChecks]
+from typing import Type, TypeVar, Union
+
+class A:
+    def __init__(self, number: int) -> None: pass
+class B:
+    def __init__(self, number: int) -> None: pass
+T = TypeVar('T', bound=Union[A, B])
+
+def construct(model: Type[T], number: int) -> T:
+    return model(number)
+
+def invalid(model: Type[T]) -> T:
+    return model('bad')  # E: Argument 1 to "A" has incompatible type "str"; expected "int" \
+                        # E: Argument 1 to "B" has incompatible type "str"; expected "int"
+
+[case testUnionBoundConstructorRetainsOverloadsAndNestedAliases]
+from typing import Type, TypeVar, Union, overload
+
+class A:
+    @overload
+    def __init__(self, number: int) -> None: ...
+    @overload
+    def __init__(self, number: str) -> None: ...
+    def __init__(self, number: Union[int, str]) -> None: pass
+class B:
+    def __init__(self, number: int) -> None: pass
+class C:
+    def __init__(self, number: int) -> None: pass
+Alias = Union[A, B]
+T = TypeVar('T', bound=Union[Alias, C])
+
+def construct(model: Type[T], number: int) -> T:
+    return model(number)
+
+def invalid(model: Type[T]) -> T:
+    return model('bad')  # E: Argument 1 to "B" has incompatible type "str"; expected "int" \
+                        # E: Argument 1 to "C" has incompatible type "str"; expected "int"
+
+[case testUnionBoundConstructorRetainsAbstractAndProtocolTypeException]
+from abc import ABCMeta, abstractmethod
+from typing import Protocol, Type, TypeVar, Union, overload
+
+class Abstract(metaclass=ABCMeta):
+    @overload
+    def __init__(self, value: int) -> None: ...
+    @overload
+    def __init__(self, value: str) -> None: ...
+    def __init__(self, value: Union[int, str]) -> None: pass
+    @abstractmethod
+    def method(self) -> None: pass
+
+class P(Protocol):
+    def method(self) -> None: ...
+
+T = TypeVar('T', bound=Union[Abstract, P])
+
+def construct(model: Type[T]) -> T:
+    return model(1)  # E: Too many arguments for "P"
+
+def abstract(model: Type[Abstract]) -> Abstract:
+    return model(1)
+
+Abstract(1)  # E: Cannot instantiate abstract class "Abstract" with abstract attribute "method"
+P()  # E: Cannot instantiate protocol class "P"
