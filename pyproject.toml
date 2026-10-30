@@ -24,7 +24,7 @@ name = "angee-mypy"
 description = "Angee's mypy fork with native typing extension hooks"
 readme = {text = """
 angee-mypy -- Angee's mypy distribution
-======================================
+==================================================
 
 This distribution contains Angee's native typing extensions to mypy, based on
 revision ac3de6e4c34b04728e768e07d4842f4309ff6c45. Install it with
