@@ -20,11 +20,17 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mypy"
-description = "Optional static typing for Python"
+name = "angee-mypy"
+description = "Angee's mypy fork with native typing extension hooks"
 readme = {text = """
-Mypy -- Optional Static Typing for Python
-=========================================
+angee-mypy -- Angee's mypy distribution
+======================================
+
+This distribution contains Angee's native typing extensions to mypy, based on
+revision ac3de6e4c34b04728e768e07d4842f4309ff6c45. Install it with
+``pip install angee-mypy``. The ``mypy`` import and command names are unchanged.
+Use it in an environment without the upstream ``mypy`` distribution because
+both distributions provide the same Python modules and commands.
 
 Add type annotations to your Python programs, and use mypy to type
 check them.  Mypy is essentially a Python linter on steroids, and it
@@ -34,6 +40,7 @@ features such as type inference, gradual typing, generics and union
 types.
 """, content-type = "text/x-rst"}
 authors = [{name = "Jukka Lehtosalo", email = "jukka.lehtosalo@iki.fi"}]
+maintainers = [{name = "Angee, Inc.", email = "hi@angee.ai"}]
 license = "MIT"
 license-files = ["LICENSE", "mypy/typeshed/LICENSE"]
 classifiers = [
@@ -71,11 +78,12 @@ faster-cache = ["orjson"]
 native-parser = []
 
 [project.urls]
-Homepage = "https://www.mypy-lang.org/"
+Homepage = "https://github.com/ang-ee/mypy"
 Documentation = "https://mypy.readthedocs.io/en/stable/index.html"
-Repository = "https://github.com/python/mypy"
+Repository = "https://github.com/ang-ee/mypy"
 Changelog = "https://github.com/python/mypy/blob/master/CHANGELOG.md"
-Issues = "https://github.com/python/mypy/issues"
+Issues = "https://github.com/ang-ee/mypy/issues"
+Upstream = "https://github.com/python/mypy"
 
 [project.scripts]
 mypy = "mypy.__main__:console_entry"

@@ -1,3 +1,12 @@
+# angee-mypy
+
+Angee's published mypy fork, based on
+[`ac3de6e4`](https://github.com/ang-ee/mypy/commit/ac3de6e4c34b04728e768e07d4842f4309ff6c45),
+provides the native typing hooks used by django-compose. Install `angee-mypy` in
+a clean environment; its `mypy` imports and commands are unchanged. It shares
+those files with upstream `mypy`, so install one distribution per environment.
+The upstream documentation and attribution follow.
+
 <img src="docs/source/mypy_light.svg" alt="mypy logo" width="300px"/>
 
 Mypy: Static Typing for Python
@@ -92,14 +101,14 @@ Quick start
 Mypy can be installed using pip:
 
 ```bash
-python3 -m pip install -U mypy
+python3 -m pip install -U angee-mypy
 ```
 
 If you want to run the latest version of the code, you can install from the
 repo directly:
 
 ```bash
-python3 -m pip install -U git+https://github.com/python/mypy.git
+python3 -m pip install -U git+https://github.com/ang-ee/mypy.git@codex/pypi-release
 ```
 
 Now you can type-check the [statically typed parts] of a program like this:
@@ -180,7 +189,7 @@ mypy approximately 4 times faster than if interpreted!
 To install an interpreted mypy instead, use:
 
 ```bash
-python3 -m pip install --no-binary mypy -U mypy
+python3 -m pip install --no-binary angee-mypy -U angee-mypy
 ```
 
 To use a compiled version of a development
